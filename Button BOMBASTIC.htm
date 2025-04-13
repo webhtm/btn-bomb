@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Bomb Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            color: #38bdf8;
+        }
+
+        .button-container {
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 600px;
+        }
+
+        .circle-button {
+            width: 80px;
+            height: 80px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 3px solid #38bdf8;
+            border-radius: 50%;
+            background: #0284c7;
+            color: #f1f5f9;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .circle-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+            background: #38bdf8;
+        }
+
+        .circle-button.disabled {
+            background: #64748b;
+            color: #e5e7eb;
+            border-color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+            color: #facc15;
+        }
+
+        #hint {
+            font-size: 18px;
+            background: #1e3a8a;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            display: inline-block;
+            color: #f1f5f9;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        #settings, #wins {
+            margin: 10px auto;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: #334155;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+            display: inline-block;
+        }
+
+        #settings select, #settings button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            margin: 12px;
+            background: #0284c7;
+            color: #f1f5f9;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        #settings button:hover, #restartGame:hover {
+            
+            background: #38bdf8;
+        }
+
+        #wins {
+            font-size: 18px;
+            color: #34d399;
+        }
+
+        #wins span {
+            background: #10b981;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #f1f5f9;
+        }
+        #restartGame {
+            background-color: transparent;
+            color: white;
+            text-decoration: underline;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            margin: 13px;
+            border-radius: 5px;
+            transition: 0.3s background-color ease;
+        }
+        #restartGame:hover {
+            background-color: #2b3b55;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Bomb Game</h1>
+    
+    <div id="settings">
+        <label for="numButtons">Select number of buttons (3–10):</label>
+        <select id="numButtons">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <button id="startGame">Start Game</button>
+    </div>
+    <p id="hint"></p>
+    
+    <div class="button-container" id="buttonContainer">
+        
+    </div>
+    <div id="message"></div> 
+    
+    <button id="restartGame" style="display: none;">Restart Game</button>
+    <div id="wins">Games Won: <span id="winCounter">0</span></div>
+    
+
+    <script>
+        const numButtonsSelect = document.getElementById('numButtons');
+        const startGameButton = document.getElementById('startGame');
+        const restartGameButton = document.getElementById('restartGame');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const hint = document.getElementById('hint');
+        const message = document.getElementById('message');
+        const winCounter = document.getElementById('winCounter');
+
+        let bombIndexes = [];
+        let safeClicks = 0;
+        let totalButtons = 5;
+        let gamesWon = 0;
+
+        function startGame() {
+            totalButtons = parseInt(numButtonsSelect.value);
+            buttonContainer.innerHTML = '';
+            bombIndexes = [];
+            safeClicks = 0;
+            message.textContent = '';
+            hint.textContent = '';
+            restartGameButton.style.display = 'none';
+
+            for (let i = 1; i <= totalButtons; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.id = `btn${i}`;
+                button.className = 'circle-button';
+                button.addEventListener('click', () => handleClick(i));
+                buttonContainer.appendChild(button);
+            }
+
+            generateBombs();
+        }
+
+        function generateBombs() {
+            const numBombs = Math.floor(Math.random() * Math.min(totalButtons - 1, 3)) + 1;
+            const availableIndexes = Array.from({ length: totalButtons }, (_, i) => i + 1);
+            for (let i = 0; i < numBombs; i++) {
+                const randomIndex = Math.floor(Math.random() * availableIndexes.length);
+                bombIndexes.push(availableIndexes.splice(randomIndex, 1)[0]);
+            }
+
+            const revealedBomb = bombIndexes[Math.floor(Math.random() * bombIndexes.length)];
+            hint.textContent = `Hint: One bomb is on Button ${revealedBomb}. Avoid it!`;
+        }
+
+        function handleClick(buttonNumber) {
+            const button = document.getElementById(`btn${buttonNumber}`);
+            if (bombIndexes.includes(buttonNumber)) {
+                message.textContent = `Boom! Button ${buttonNumber} was a bomb!`;
+                message.style.color = "red";
+                disableAllButtons();
+                restartGameButton.style.display = 'block';
+            } else {
+                button.disabled = true;
+                button.classList.add('disabled');
+                safeClicks++;
+                if (safeClicks === totalButtons - bombIndexes.length) {
+                    message.textContent = "Congratulations! You clicked all safe buttons!";
+                    message.style.color = "limegreen";
+                    gamesWon++;
+                    winCounter.textContent = gamesWon;
+                    disableAllButtons();
+                    restartGameButton.style.display = 'block';
+                }
+            }
+        }
+
+        function disableAllButtons() {
+            for (let i = 1; i <= totalButtons; i++) {
+                const button = document.getElementById(`btn${i}`);
+                button.disabled = true;
+                button.classList.add('disabled');
+            }
+        }
+
+        startGameButton.addEventListener('click', startGame);
+        restartGameButton.addEventListener('click', startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
